@@ -1,4 +1,4 @@
-from fastapi import  FastAPI
+from fastapi import  FastAPI, HTTPException, Query
 from externo import APIexterna
 
 app = FastAPI(
@@ -10,18 +10,46 @@ app = FastAPI(
 apiexterna = APIexterna()
 
 @app.get('/empenho_de_gastos/{municipio}', tags=['Resumo'], summary='Retorna gastos empenhados por município')
-def notas_gastos(municipio:str,orgao:str, date:str, natureza:str = None):
-    cod_municipio = apiexterna.getCodMunicipio(municipio)
-    cod_orgao = apiexterna.getCodOrgao(cod_municipio, apiexterna.tratarData(date,'ano'), orgao)
-    if natureza:
-        resultado = apiexterna.getInfoEmpenhos(cod_municipio, date, cod_orgao, natureza)
-    else:
-        resultado = apiexterna.getInfoEmpenhos(cod_municipio, date, cod_orgao)
-    return resultado
+def notas_gastos(municipio: str , 
+                 orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos', example='Camara Municipal'),
+                 date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm', example='202403'), 
+                 natureza: str = Query(None, description='Nome da natureza do empenho que deseja', example='Material de consumo')):
+    try:
+        cod_municipio = apiexterna.getCodMunicipio(municipio)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Município '{municipio}' não encontrado: {e}")
 
-@app.get('/agentes_publicos', tags=['Resumo'], summary='Resumo dos funcionarios por determinada unidade')
-def agentes(municipio:str, orgao:str, date:str, ordenar: str = 'ordem alfabetica'):
-    cod_municipio = apiexterna.getCodMunicipio(municipio)
-    cod_orgao = apiexterna.getCodOrgao(cod_municipio, apiexterna.tratarData(date,'ano'), orgao)
-    resultado = apiexterna.getFiltrarOrdenarAgentes(cod_municipio, orgao, cod_orgao, apiexterna.tratarData(date,'ano'))
-    return resultado
+    try:
+        cod_orgao = apiexterna.getCodOrgao(cod_municipio, apiexterna.tratarData(date, 'ano'), orgao)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Órgão '{orgao}' não encontrado para o município '{municipio}': {e}")
+
+    try:
+        if natureza:
+            resultado = apiexterna.getInfoEmpenhos(cod_municipio, date, cod_orgao, natureza)
+        else:
+            resultado = apiexterna.getInfoEmpenhos(cod_municipio, date, cod_orgao)
+        return resultado
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter dados de empenhos: {e}")
+
+@app.get('/agentes_publicos', tags=['Resumo'], summary='Resumo dos funcionários por determinada orgão')
+def agentes(municipio: str = Query(description='Nome do município'), 
+            orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos', example='Camara Municipal'), 
+            date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm', example='202403'), 
+            ordenar: str = 'ordem alfabetica'):
+    try:
+        cod_municipio = apiexterna.getCodMunicipio(municipio)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Município '{municipio}' não encontrado: {e}")
+
+    try:
+        cod_orgao = apiexterna.getCodOrgao(cod_municipio, apiexterna.tratarData(date, 'ano'), orgao)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Órgão '{orgao}' não encontrado para o município '{municipio}': {e}")
+
+    try:
+        resultado = apiexterna.getFiltrarOrdenarAgentes(cod_municipio, orgao, cod_orgao, apiexterna.tratarData(date, 'ano'))
+        return resultado
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao obter dados de agentes públicos: {e}")
