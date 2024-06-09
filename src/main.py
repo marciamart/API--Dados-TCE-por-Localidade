@@ -11,9 +11,9 @@ apiexterna = APIexterna()
 
 @app.get('/empenho_de_gastos/{municipio}', tags=['Resumo'], summary='Retorna gastos empenhados por município')
 def notas_gastos(municipio: str , 
-                 orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos', example='Camara Municipal'),
-                 date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm', example='202403'), 
-                 natureza: str = Query(None, description='Nome da natureza do empenho que deseja', example='Material de consumo')):
+                 orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos'),
+                 date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm'), 
+                 natureza: str = Query(None, description='Nome da natureza do empenho que deseja')):
     try:
         cod_municipio = apiexterna.getCodMunicipio(municipio)
     except Exception as e:
@@ -35,8 +35,8 @@ def notas_gastos(municipio: str ,
 
 @app.get('/agentes_publicos', tags=['Resumo'], summary='Resumo dos funcionários por determinada orgão')
 def agentes(municipio: str = Query(description='Nome do município'), 
-            orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos', example='Camara Municipal'), 
-            date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm', example='202403'), 
+            orgao: str = Query(description='Nome do orgão que deseja saber o destino dos seus empenhos'), 
+            date: str = Query(description='Forneça o ano e mês que deseja verificar no formato yyyymm'), 
             ordenar: str = 'ordem alfabetica'):
     try:
         cod_municipio = apiexterna.getCodMunicipio(municipio)
